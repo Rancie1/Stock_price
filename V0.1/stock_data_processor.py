@@ -20,7 +20,7 @@ def load_and_process_stock_data(
     save_locally: bool = False,
     load_locally: bool = False,
     data_dir: str = 'stock_data',
-    # New parameters for LSTM sequence creation
+    # Parameters for LSTM sequence creation
     n_steps: int = 60,
     lookup_step: int = 1,
     target_column: str = 'Close',
