@@ -82,7 +82,7 @@ model = Sequential() # Basic neural network
 # We need input_shape=(time_steps, features)
 model.add(LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
 # Original code used input_shape=(x_train.shape[1], 1) for single feature
-# enhanced version uses input_shape=(60, 5) for multiple features
+# Load and Process function uses input_shape=(60, 5) for multiple features
 
 model.add(Dropout(0.2))
 model.add(LSTM(units=50, return_sequences=True))
