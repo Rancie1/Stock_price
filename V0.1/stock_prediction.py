@@ -17,7 +17,7 @@
 # pip install pandas-datareader
 # pip install yfinance
 
-from stock_data_processor import load_and_process_stock_data
+from load_function import load_and_process_stock_data
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
