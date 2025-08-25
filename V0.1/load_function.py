@@ -390,6 +390,9 @@ def example_usage():
         print(f"Training sequences: {X_train2.shape}")
         print(f"Test sequences: {X_test2.shape}")
         print(f"Split date: {metadata2['split_date']}")
+
+
+        
         
         # Example 3: Simple arrays (no sequences) for comparison
         print("\n" + "="*60)
@@ -406,6 +409,9 @@ def example_usage():
         
         print(f"Simple training data: {X_train3.shape}")
         print(f"Simple test data: {X_test3.shape}")
+
+
+
         
         # Example 4: Show how to use scalers for inverse transformation
         print("\n" + "="*60)
