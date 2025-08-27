@@ -21,7 +21,6 @@ def display_candlestick_chart(
     style: str = 'yahoo',
     figsize: Tuple[int, int] = (12, 8),
     title: Optional[str] = None,
-    save_path: Optional[str] = None,
     show_plot: bool = True
 ) -> None:
     """
@@ -322,7 +321,7 @@ def display_candlestick_chart(
         }
         
         # Handle saving and display options
-        if save_path or not show_plot:
+        if not show_plot:
             # If we need to save the chart or not display it, we need the figure object
             # returnfig=True makes mplfinance return the matplotlib figure object
             # instead of just displaying the chart immediately
@@ -332,18 +331,7 @@ def display_candlestick_chart(
                 **plot_kwargs           # Unpack all the plot configuration options
             )
             
-            # Save the chart to file if a save path was provided
-            if save_path:
-                print(f"Saving chart to: {save_path}")
-                # fig.savefig() saves the matplotlib figure to a file
-                fig.savefig(
-                    save_path,              # File path (extension determines format)
-                    dpi=300,               # High resolution (300 dots per inch)
-                    bbox_inches='tight',   # Remove extra whitespace around the chart
-                    facecolor='white',     # Set background color to white
-                    edgecolor='none'       # No border around the chart
-                )
-                print("Chart saved successfully")
+        
             
             # Display the chart if requested
             if show_plot:
@@ -451,7 +439,6 @@ def demonstrate_candlestick_function():
             n_days=22,                   # Monthly aggregation (~22 trading days per month)
             chart_type='candle',
             volume=True,
-            save_path='msft_monthly_chart.png'  # Save to file
         )
     except Exception as e:
         print(f"Example 3 failed: {e}")
