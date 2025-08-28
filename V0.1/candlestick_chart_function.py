@@ -70,9 +70,7 @@ def display_candlestick_chart(
         
     title : Optional[str], default None
         Custom chart title. If None, auto-generates title based on symbol
-        
-    save_path : Optional[str], default None
-        File path to save the chart image (e.g., 'chart.png')
+
         
     show_plot : bool, default True
         Whether to display the chart on screen
@@ -420,8 +418,7 @@ def demonstrate_candlestick_function():
             start_date='2023-01-01',
             end_date='2024-01-01',
             n_days=5,                    # Weekly aggregation
-            chart_type='candle',
-            style='nightclouds',         # Dark theme
+            chart_type='candle',         
             figsize=(14, 8)
         )
     except Exception as e:
