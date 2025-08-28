@@ -22,8 +22,7 @@ def plot_stock_boxplot(data: Union[pd.DataFrame, None] = None,
                       show_outliers: bool = True,
                       show_means: bool = True,
                       rotation: int = 45,
-                      show_plot: bool = True,
-                      save_path: Optional[str] = None) -> plt.Figure:
+                      show_plot: bool = True) -> plt.Figure:
     """
     Display stock market financial data using boxplot charts for moving windows of consecutive trading days.
     Integrates with yfinance for automatic data download, similar to candlestick chart function.
@@ -82,8 +81,7 @@ def plot_stock_boxplot(data: Union[pd.DataFrame, None] = None,
     show_plot : bool, default True
         Whether to display the chart on screen
         
-    save_path : str, optional
-        File path to save the plot. If None, plot is displayed but not saved
+
         
     Returns:
     --------
@@ -144,7 +142,7 @@ def plot_stock_boxplot(data: Union[pd.DataFrame, None] = None,
     print("="*60)
     
     # ================================================================================
-    # STEP 2: DATA ACQUISITION (similar to candlestick function)
+    # STEP 2: DATA ACQUISITION 
     # ================================================================================
     
     if data is None:
@@ -177,7 +175,7 @@ def plot_stock_boxplot(data: Union[pd.DataFrame, None] = None,
             raise TypeError("'data' parameter must be a pandas DataFrame")
     
     # ================================================================================
-    # STEP 3: DATA VALIDATION AND CLEANING (similar to candlestick function)
+    # STEP 3: DATA VALIDATION AND CLEANING 
     # ================================================================================
     
     # Handle MultiIndex columns that yfinance sometimes creates
@@ -346,10 +344,7 @@ def plot_stock_boxplot(data: Union[pd.DataFrame, None] = None,
     # STEP 6: SAVE AND DISPLAY
     # ================================================================================
     
-    # Save plot if path provided
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
-        print(f"Plot saved to: {save_path}")
+
     
     # Display plot if requested
     if show_plot:
