@@ -214,7 +214,7 @@ def display_candlestick_chart(
     print(f"Date range: {data.index[0].strftime('%Y-%m-%d')} to {data.index[-1].strftime('%Y-%m-%d')}")
     
     # ================================================================================
-    # STEP 4: N-DAY AGGREGATION (KEY FEATURE)
+    # STEP 4: N-DAY AGGREGATION 
     # ================================================================================
     
     if n_days > 1:
