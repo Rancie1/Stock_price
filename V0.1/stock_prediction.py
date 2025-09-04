@@ -16,7 +16,7 @@ TRAIN_END = '2024-07-31'
 PREDICTION_DAYS = 60
 
 print("="*80)
-print("FIXED ENHANCED STOCK PREDICTION WITH CUSTOMIZABLE DEEP LEARNING MODELS")
+print("ENHANCED STOCK PREDICTION WITH CUSTOMIZABLE DEEP LEARNING MODELS")
 print("="*80)
 
 # Load and Process Data (this part works fine)
@@ -108,7 +108,7 @@ print("\n" + "="*60)
 print("BUILDING MODEL 1: SIMPLE LSTM")
 print("="*60)
 
-# Corrected configuration - no layer_name in the config, we'll let the function handle naming
+
 simple_lstm_config = [
     {
         'layer_type': 'lstm',
