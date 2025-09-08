@@ -1,8 +1,9 @@
-# File: fixed_enhanced_stock_prediction.py
-# Fixed version that addresses the layer naming issue
+# stock_prediction.py
+# Stock prediction now using the create_model function
 
 from load_function import load_and_process_stock_data
-from working_model_builder import build_deep_learning_model, create_lstm_model_config
+from model_builder import create_model
+from tensorflow.keras.layers import LSTM, GRU
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,10 +17,10 @@ TRAIN_END = '2024-07-31'
 PREDICTION_DAYS = 60
 
 print("="*80)
-print("ENHANCED STOCK PREDICTION WITH CUSTOMIZABLE DEEP LEARNING MODELS")
+print("SIMPLE ENHANCED STOCK PREDICTION")
 print("="*80)
 
-# Load and Process Data (this part works fine)
+# Load and Process Data
 print("\n" + "="*60)
 print("LOADING AND PROCESSING DATA")
 print("="*60)
@@ -42,10 +43,9 @@ print(f"- Company: {metadata['company_symbol']}")
 print(f"- Features: {metadata['features']}")
 print(f"- Training sequences: {X_train.shape}")
 print(f"- Test sequences: {X_test.shape}")
-print(f"- Input shape for models: {(X_train.shape[1], X_train.shape[2])}")
 
 # Function to train and evaluate a model
-def train_and_evaluate_model(model, model_name, epochs=25, batch_size=32):
+def train_and_evaluate_model(model, model_name, epochs=20, batch_size=32):
     """Train a model and return predictions with evaluation metrics"""
     
     print(f"\n" + "="*60)
@@ -87,156 +87,161 @@ def train_and_evaluate_model(model, model_name, epochs=25, batch_size=32):
         'test_mae': test_mae
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Test Model 1: Simple LSTM (corrected configuration)
+# Model 1: Simple LSTM with custom layer names
 print("\n" + "="*60)
 print("BUILDING MODEL 1: SIMPLE LSTM")
 print("="*60)
 
-
-simple_lstm_config = [
-    {
-        'layer_type': 'lstm',
-        'units': 50,
-        'layer_name': 'lstm_1',
-        'return_sequences': True,
-        'dropout': 0.2
-    },
-    {
-        'layer_type': 'lstm',
-        'units': 50,
-        'layer_name': 'lstm_2',
-        'return_sequences': True,
-        'dropout': 0.2
-    },
-    {
-        'layer_type': 'lstm',
-        'units': 50,
-        'layer_name': 'lstm_3',
-        'return_sequences': False,
-        'dropout': 0.2
-    }
-]
-
 try:
-    model1 = build_deep_learning_model(
-        input_shape=(X_train.shape[1], X_train.shape[2]),
-        layer_configs=simple_lstm_config,
-        model_name="Simple_LSTM"
+    model1 = create_model(
+        sequence_length=X_train.shape[1],
+        n_features=X_train.shape[2],
+        units=50,
+        n_layers=2,
+        dropout=0.2,
+        layer_names=['encoder_lstm', 'decoder_lstm']
     )
     
-    results1 = train_and_evaluate_model(model1, "Simple LSTM Model", epochs=10)  # Reduced epochs for testing
+    print(f"Model 1 Layer names: {[layer.name for layer in model1.layers]}")
     
-    # Plot results
-    plt.figure(figsize=(12, 6))
-    plt.plot(results1['y_test_original'], color="black", label=f"Actual {COMPANY} Price", linewidth=2)
-    plt.plot(results1['test_predictions'], color="green", label=f"Predicted {COMPANY} Price", linewidth=2)
-    plt.title(f"{COMPANY} Share Price Prediction - Simple LSTM Model")
+    results1 = train_and_evaluate_model(model1, "Simple LSTM", epochs=15)
+    
+    print("✅ Model 1 completed successfully!")
+    
+except Exception as e:
+    print(f"❌ Error in Model 1: {e}")
+
+# Model 2: Deep LSTM with auto-generated names
+print("\n" + "="*60)
+print("BUILDING MODEL 2: DEEP LSTM")
+print("="*60)
+
+try:
+    model2 = create_model(
+        sequence_length=X_train.shape[1],
+        n_features=X_train.shape[2],
+        units=64,
+        n_layers=4,
+        dropout=0.3
+        # No layer_names parameter = auto-generated names
+    )
+    
+    print(f"Model 2 Layer names: {[layer.name for layer in model2.layers]}")
+    
+    results2 = train_and_evaluate_model(model2, "Deep LSTM", epochs=15)
+    
+    print("✅ Model 2 completed successfully!")
+    
+except Exception as e:
+    print(f"❌ Error in Model 2: {e}")
+
+# Model 3: Bidirectional LSTM
+print("\n" + "="*60)
+print("BUILDING MODEL 3: BIDIRECTIONAL LSTM")
+print("="*60)
+
+try:
+    model3 = create_model(
+        sequence_length=X_train.shape[1],
+        n_features=X_train.shape[2],
+        units=128,
+        n_layers=2,
+        dropout=0.25,
+        bidirectional=True,
+        layer_names=['bidirectional_encoder', 'bidirectional_processor']
+    )
+    
+    print(f"Model 3 Layer names: {[layer.name for layer in model3.layers]}")
+    
+    results3 = train_and_evaluate_model(model3, "Bidirectional LSTM", epochs=15)
+    
+    print("✅ Model 3 completed successfully!")
+    
+except Exception as e:
+    print(f"❌ Error in Model 3: {e}")
+
+# Model 4: GRU Model
+print("\n" + "="*60)
+print("BUILDING MODEL 4: GRU MODEL")
+print("="*60)
+
+try:
+    model4 = create_model(
+        sequence_length=X_train.shape[1],
+        n_features=X_train.shape[2],
+        units=100,
+        cell=GRU,  # Using GRU instead of LSTM
+        n_layers=3,
+        dropout=0.2,
+        layer_names=['gru_primary', 'gru_secondary', 'gru_final']
+    )
+    
+    print(f"Model 4 Layer names: {[layer.name for layer in model4.layers]}")
+    
+    results4 = train_and_evaluate_model(model4, "GRU Model", epochs=15)
+    
+    print("✅ Model 4 completed successfully!")
+    
+except Exception as e:
+    print(f"❌ Error in Model 4: {e}")
+
+# Compare models and plot the best one
+print("\n" + "="*60)
+print("MODEL COMPARISON")
+print("="*60)
+
+models_results = []
+if 'results1' in locals():
+    models_results.append(("Simple LSTM", results1))
+if 'results2' in locals():
+    models_results.append(("Deep LSTM", results2))
+if 'results3' in locals():
+    models_results.append(("Bidirectional LSTM", results3))
+if 'results4' in locals():
+    models_results.append(("GRU Model", results4))
+
+if models_results:
+    print("\nModel Performance Comparison:")
+    print("-" * 50)
+    print(f"{'Model Name':<20} {'RMSE ($)':<12} {'MAE ($)':<12}")
+    print("-" * 50)
+    
+    for name, result in models_results:
+        print(f"{name:<20} {result['test_rmse']:<12.2f} {result['test_mae']:<12.2f}")
+    
+    # Find and plot best model
+    best_model_name, best_result = min(models_results, key=lambda x: x[1]['test_rmse'])
+    print(f"\nBest performing model: {best_model_name} (RMSE: ${best_result['test_rmse']:.2f})")
+    
+    # Plot the best model's results
+    plt.figure(figsize=(14, 8))
+    plt.plot(best_result['y_test_original'], color="black", label=f"Actual {COMPANY} Price", linewidth=2)
+    plt.plot(best_result['test_predictions'], color="green", label=f"Predicted {COMPANY} Price", linewidth=2)
+    plt.title(f"{COMPANY} Share Price Prediction - {best_model_name}")
     plt.xlabel("Test Days")
     plt.ylabel(f"{COMPANY} Share Price ($)")
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
-    
-    print("✅ Model 1 completed successfully!")
-    
-except Exception as e:
-    print(f"❌ Error in Model 1: {e}")
-    import traceback
-    traceback.print_exc()
 
-# Test Model 2: Using helper function
-print("\n" + "="*60)
-print("BUILDING MODEL 2: LSTM WITH HELPER FUNCTION")
-print("="*60)
-
-try:
-    # Use the helper function which should handle naming correctly
-    lstm_config = create_lstm_model_config(
-        lstm_layers=[64, 32],
-        dense_layers=[25],
-        dropout_rates=[0.2, 0.2]
-    )
-    
-    model2 = build_deep_learning_model(
-        input_shape=(X_train.shape[1], X_train.shape[2]),
-        layer_configs=lstm_config,
-        model_name="Helper_LSTM"
-    )
-    
-    results2 = train_and_evaluate_model(model2, "Helper LSTM Model", epochs=10)
-    
-    print("✅ Model 2 completed successfully!")
-    
-except Exception as e:
-    print(f"❌ Error in Model 2: {e}")
-    import traceback
-    traceback.print_exc()
-
-# Test Model 3: Minimal configuration
-print("\n" + "="*60)
-print("BUILDING MODEL 3: MINIMAL LSTM")
-print("="*60)
-
-try:
-    # Most basic configuration to test the core functionality
-    minimal_config = [
-        {
-            'layer_type': 'lstm',
-            'units': 50,
-            'layer_name': 'lstm_only'
-        }
-    ]
-    
-    model3 = build_deep_learning_model(
-        input_shape=(X_train.shape[1], X_train.shape[2]),
-        layer_configs=minimal_config,
-        model_name="Minimal_LSTM"
-    )
-    
-    results3 = train_and_evaluate_model(model3, "Minimal LSTM Model", epochs=5)
-    
-    print("✅ Model 3 completed successfully!")
-    
-except Exception as e:
-    print(f"❌ Error in Model 3: {e}")
-    import traceback
-    traceback.print_exc()
-
-# Future prediction with the working model
-if 'results1' in locals():
+    # Future prediction with the best model
     print("\n" + "="*60)
     print("FUTURE PRICE PREDICTION")
     print("="*60)
     
-    # Use model1 for future prediction
+    best_model = best_result['model']
     last_sequence = metadata['last_sequence']
     future_input = last_sequence[-PREDICTION_DAYS:].reshape(1, PREDICTION_DAYS, X_train.shape[2])
     
     target_scaler = metadata['scalers'][metadata['target_column']]
-    future_prediction_scaled = model1.predict(future_input)
+    future_prediction_scaled = best_model.predict(future_input)
     future_prediction = target_scaler.inverse_transform(future_prediction_scaled)
     
     print(f"Next day price prediction: ${future_prediction[0][0]:.2f}")
     
     # Compare with last known price
-    last_actual = results1['y_test_original'][-1][0]
+    last_actual = best_result['y_test_original'][-1][0]
     price_change = future_prediction[0][0] - last_actual
     price_change_percent = (price_change / last_actual) * 100
     
@@ -244,8 +249,9 @@ if 'results1' in locals():
     print(f"Predicted change: ${price_change:.2f} ({price_change_percent:+.2f}%)")
 
 print("\n" + "="*80)
-print("TESTING COMPLETE")
+print("SIMPLE ENHANCED MODEL TESTING COMPLETE")
 print("="*80)
-print("If no errors appeared above, the model builder is working correctly!")
-print("You can now use it to build custom deep learning models for your stock predictions.")
+print("✅ Enhanced create_model function with layer naming support")
+print("✅ Multiple architectures tested with custom and auto-generated names")
+print("✅ Simple and clean implementation")
 print("="*80)
