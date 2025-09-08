@@ -17,7 +17,7 @@ TRAIN_END = '2024-07-31'
 PREDICTION_DAYS = 60
 
 print("="*80)
-print("SIMPLE ENHANCED STOCK PREDICTION")
+print("STOCK PREDICTION")
 print("="*80)
 
 # Load and Process Data
@@ -104,7 +104,7 @@ try:
     
     print(f"Model 1 Layer names: {[layer.name for layer in model1.layers]}")
     
-    results1 = train_and_evaluate_model(model1, "Simple LSTM", epochs=15)
+    results1 = train_and_evaluate_model(model1, "Simple LSTM", epochs=20, batch_size=16)
     
     print("✅ Model 1 completed successfully!")
     
@@ -128,7 +128,7 @@ try:
     
     print(f"Model 2 Layer names: {[layer.name for layer in model2.layers]}")
     
-    results2 = train_and_evaluate_model(model2, "Deep LSTM", epochs=15)
+    results2 = train_and_evaluate_model(model2, "Deep LSTM", epochs=20, batch_size=16)
     
     print("✅ Model 2 completed successfully!")
     
@@ -153,7 +153,7 @@ try:
     
     print(f"Model 3 Layer names: {[layer.name for layer in model3.layers]}")
     
-    results3 = train_and_evaluate_model(model3, "Bidirectional LSTM", epochs=15)
+    results3 = train_and_evaluate_model(model3, "Bidirectional LSTM", epochs=20, batch_size=16)
     
     print("✅ Model 3 completed successfully!")
     
@@ -178,7 +178,7 @@ try:
     
     print(f"Model 4 Layer names: {[layer.name for layer in model4.layers]}")
     
-    results4 = train_and_evaluate_model(model4, "GRU Model", epochs=15)
+    results4 = train_and_evaluate_model(model4, "GRU Model", epochs=20, batch_size=16)
     
     print("✅ Model 4 completed successfully!")
     
