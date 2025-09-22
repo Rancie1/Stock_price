@@ -9,6 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
+from multi_prediction import predict_multistep_prices, predict_multivariate_closing_price
+
+from multi_prediction import run_combined_multivariate_multistep_analysis
 
 # Configuration
 COMPANY = 'CBA.AX'
@@ -87,6 +90,8 @@ def train_and_evaluate_model(model, model_name, epochs=20, batch_size=32):
         'test_mae': test_mae
     }
 
+
+
 # Model 1: Simple LSTM with custom layer names
 print("\n" + "="*60)
 print("BUILDING MODEL 1: SIMPLE LSTM")
@@ -111,6 +116,8 @@ try:
 except Exception as e:
     print(f"❌ Error in Model 1: {e}")
 
+
+"""
 # Model 2: Deep LSTM with auto-generated names
 print("\n" + "="*60)
 print("BUILDING MODEL 2: DEEP LSTM")
@@ -184,6 +191,7 @@ try:
     
 except Exception as e:
     print(f"❌ Error in Model 4: {e}")
+"""
 
 # Compare models and plot the best one
 print("\n" + "="*60)
@@ -225,7 +233,7 @@ if models_results:
     plt.tight_layout()
     plt.show()
 
-    # Future prediction with the best model
+    # Future one day prediction with the best model
     print("\n" + "="*60)
     print("FUTURE PRICE PREDICTION")
     print("="*60)
@@ -248,10 +256,172 @@ if models_results:
     print(f"Last known price: ${last_actual:.2f}")
     print(f"Predicted change: ${price_change:.2f} ({price_change_percent:+.2f}%)")
 
+
+
+
+
+
+
+
+
+
+
+    # MULTISTEP FUTURE PREDICTION
+    print("\n" + "="*60)
+    print("MULTISTEP FUTURE PREDICTION")
+    print("="*60)
+    
+    # Define prediction horizons to test
+    prediction_horizons = [5]  # 5 days ahead
+    
+    for k_days in prediction_horizons:
+        print(f"\n{'='*50}")
+        print(f"PREDICTING {k_days} DAYS AHEAD")
+        print("="*50)
+        
+        try:
+            # Make multistep predictions
+            multistep_predictions = predict_multistep_prices(
+                model=best_model,
+                last_sequence=last_sequence,
+                n_steps=PREDICTION_DAYS,
+                k_days=k_days,
+                target_scaler=target_scaler,
+                target_feature_idx=0  # Assuming Close price is at index 0
+            )
+            
+            # Display results summary
+            print(f"\n{k_days}-Day Prediction Summary:")
+            print("-" * 35)
+            print(f"{'Day':<5} {'Price':<10} {'Change':<12} {'% Change':<10}")
+            print("-" * 35)
+            
+            for i, pred in enumerate(multistep_predictions):
+                change_from_last = pred - last_actual
+                change_percent = (change_from_last / last_actual) * 100
+                print(f"{i+1:<5} ${pred:<9.2f} ${change_from_last:<11.2f} {change_percent:<9.2f}%")
+            
+            # Calculate cumulative change
+            total_change = multistep_predictions[-1] - last_actual
+            total_change_percent = (total_change / last_actual) * 100
+            
+            print(f"\nCumulative change over {k_days} days:")
+            print(f"Price change: ${total_change:+.2f}")
+            print(f"Percentage change: {total_change_percent:+.2f}%")
+                
+        except Exception as e:
+            print(f"❌ Error in {k_days}-day prediction: {e}")
+    
+ 
 print("\n" + "="*80)
-print("SIMPLE ENHANCED MODEL TESTING COMPLETE")
+print("ENHANCED STOCK PREDICTION WITH MULTISTEP FORECASTING COMPLETE")
 print("="*80)
-print("✅ Enhanced create_model function with layer naming support")
-print("✅ Multiple architectures tested with custom and auto-generated names")
-print("✅ Simple and clean implementation")
+
+
+
+
+
+
+
+
+# MULTIVARIATE CLOSING PRICE PREDICTION
+print("\n" + "="*60)
+print("MULTIVARIATE CLOSING PRICE PREDICTION")
+print("="*60)
+
+try:
+    # Test different scenarios for multivariate prediction
+    print("Testing multivariate prediction")
+    
+    # Get current feature values as baseline
+    current_features_scaled = last_sequence[-1]
+    current_features_actual = {}
+    
+    for i, feature in enumerate(metadata['features']):
+        if feature in metadata['scalers']:
+            actual_value = metadata['scalers'][feature].inverse_transform([[current_features_scaled[i]]])[0][0]
+            current_features_actual[feature] = actual_value
+    
+    # Example: Predict closing price if we expect specific market conditions
+    example_features = current_features_actual.copy()
+    
+    # Modify some features for prediction scenario
+    if 'Open' in example_features:
+        example_features['Open'] = example_features['Open'] * 1.02  # 2% higher open
+    if 'High' in example_features:
+        example_features['High'] = max(example_features.get('Open', 0), example_features['High']) * 1.03
+    if 'Low' in example_features:
+        example_features['Low'] = min(example_features.get('Open', 100), example_features['Low']) * 0.98
+    if 'Volume' in example_features:
+        example_features['Volume'] = example_features['Volume'] * 1.1  # 10% higher volume
+    
+    # Scale the example features
+    scaled_example_features = np.zeros(len(metadata['features']))
+    for i, feature in enumerate(metadata['features']):
+        if feature in metadata['scalers'] and feature in example_features:
+            scaled_value = metadata['scalers'][feature].transform([[example_features[feature]]])[0][0]
+            scaled_example_features[i] = scaled_value
+    
+    # Make prediction
+    manual_prediction = predict_multivariate_closing_price(
+        model=best_model,
+        last_sequence=last_sequence,
+        n_steps=PREDICTION_DAYS,
+        future_features=scaled_example_features,
+        target_scaler=target_scaler,
+        features_list=metadata['features'],
+        target_column=metadata['target_column']
+    )
+
+
+    
+except Exception as e:
+    print(f"❌ Error in multivariate prediction: {e}")
+    import traceback
+    traceback.print_exc()
+print("\n" + "="*80)
+print("ENHANCED STOCK PREDICTION WITH MULTIVARIATE FORECASTING COMPLETE")
 print("="*80)
+
+
+
+
+
+
+
+
+
+# DUAL PREDICTION ANALYSIS
+
+print(f"\n" + "="*70)
+print("COMBINED MULTIVARIATE-MULTISTEP PREDICTION")
+print("="*70)
+
+
+best_model = best_result['model']
+last_sequence = metadata['last_sequence']
+target_scaler = metadata['scalers'][metadata['target_column']]
+
+
+
+# Run the combined prediction
+combined_results = run_combined_multivariate_multistep_analysis(
+    model=best_model,
+    metadata=metadata,
+    prediction_days=PREDICTION_DAYS,
+    k_days=5
+)
+
+
+combined_final = combined_results['target_prices'][-1]
+combined_change = combined_final - last_actual
+combined_change_pct = (combined_change / last_actual) * 100
+
+# Final comparison 
+print(f"\n" + "="*50)
+print(f"Current price:     ${last_actual:.2f}")
+print(f"Combined approach multistep and multivariate: ${combined_final:.2f} ({combined_change_pct:+.2f}%)")
+
+print(f"\n{'='*60}")
+print("COMPLETE PREDICTION ANALYSIS FINISHED")
+print("="*60)
