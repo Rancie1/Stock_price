@@ -117,7 +117,7 @@ except Exception as e:
     print(f"❌ Error in Model 1: {e}")
 
 
-"""
+
 # Model 2: Deep LSTM with auto-generated names
 print("\n" + "="*60)
 print("BUILDING MODEL 2: DEEP LSTM")
@@ -191,7 +191,7 @@ try:
     
 except Exception as e:
     print(f"❌ Error in Model 4: {e}")
-"""
+
 
 # Compare models and plot the best one
 print("\n" + "="*60)
