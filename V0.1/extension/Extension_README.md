@@ -232,47 +232,7 @@ self.models = {
 
 ---
 
-## 🐛 Troubleshooting
 
-### Error: "ALPHA_VANTAGE_API_KEY not found"
-
-**Solution:**
-1. Create `.env` file in project root (not in `extension/` folder)
-2. Add: `ALPHA_VANTAGE_API_KEY=your_key_here`
-3. Ensure `python-dotenv` is installed: `pip install python-dotenv`
-
-### Error: "No news articles found"
-
-**Possible causes:**
-1. Ticker symbol not recognized by Alpha Vantage (try US stocks like 'AAPL', 'MSFT')
-2. Date range too recent (news may not be available yet)
-3. API rate limit reached (free tier: 5 calls/minute, 500 calls/day)
-
-**Solution:**
-- Try a different, well-known stock ticker
-- Use a historical date range (not too recent)
-- Wait a few minutes if rate limited
-
-### Error: "FileNotFoundError: combined_data.pkl"
-
-**Solution:**
-- Run `sentiment_data.py` first to generate the data file
-- Check that files are saved to `../sentiment_data/` directory
-
-### Error: "Small dataset detected"
-
-**Solution:**
-- This is a warning, not an error
-- The code automatically switches to cross-validation for small datasets
-- Collect more data by increasing the date range
-
-### Visualizations Not Showing
-
-**Solution:**
-- Ensure matplotlib is installed: `pip install matplotlib seaborn`
-- On headless servers, visualizations may not display (code will still run)
-
----
 
 ## 📈 Typical Workflow
 
@@ -341,26 +301,3 @@ python sentiment_analysis_report.py
    - Sentiment scores range from -1 (negative) to +1 (positive)
 
 ---
-
-## 🔗 Additional Resources
-
-- **Alpha Vantage API Docs**: https://www.alphavantage.co/documentation/
-- **Yahoo Finance (yfinance)**: https://pypi.org/project/yfinance/
-- **VADER Sentiment**: https://github.com/cjhutto/vaderSentiment
-- **Scikit-learn Documentation**: https://scikit-learn.org/
-
----
-
-## 💡 Tips for Best Results
-
-1. **Choose liquid stocks** (high trading volume) for better predictions
-2. **Use longer date ranges** (1+ years) for more training data
-3. **Focus on news-heavy stocks** (finance, tech) for sentiment analysis
-4. **Experiment with different tickers** to find optimal performance
-5. **Monitor API rate limits** to avoid interruptions
-6. **Regularly update data** as new news becomes available
-
----
-
-*Last Updated: 2025-10-27*
-*Extension Version: 1.0*
