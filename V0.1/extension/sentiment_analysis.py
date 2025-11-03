@@ -38,19 +38,27 @@ class SentimentAnalyzer:
         
         df = data.copy()
         
-        # Analyze sentiment for each day
-        df['sentiment_score'] = 0.0
-        
-        for idx, row in df.iterrows():
-            # Combine title and description
-            text = ""
-            if pd.notna(row.get('title')):
-                text += str(row['title']) + " "
-            if pd.notna(row.get('description')):
-                text += str(row['description'])
+        # Check if we have Alpha Vantage sentiment scores
+        if 'sentiment_score' in df.columns and df['sentiment_score'].notna().any():
+            logger.info("Using Alpha Vantage pre-calculated sentiment scores")
+            # Alpha Vantage scores are already calculated, just ensure they're numeric
+            df['sentiment_score'] = pd.to_numeric(df['sentiment_score'], errors='coerce').fillna(0.0)
+        else:
+            logger.info("Calculating sentiment scores using VADER")
+            # Analyze sentiment for each day using VADER
+            df['sentiment_score'] = 0.0
             
-            # Get sentiment score
-            df.at[idx, 'sentiment_score'] = self.analyze_sentiment(text)
+            for idx, row in df.iterrows():
+                # Combine title and description
+                text = ""
+                if pd.notna(row.get('title')):
+                    text += str(row['title']) + " "
+                if pd.notna(row.get('description')):
+                    text += str(row['description'])
+                
+                if text.strip():
+                    sentiment = self.analyze_sentiment(text)
+                    df.at[idx, 'sentiment_score'] = sentiment
         
         logger.info(f"Sentiment analysis complete")
         logger.info(f"Average sentiment: {df['sentiment_score'].mean():.3f}")

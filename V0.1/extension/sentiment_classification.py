@@ -275,18 +275,19 @@ class SentimentFeatureEngineer:
         # Create feature matrix and handle infinite/large values
         X = df[feature_cols].copy()
         
-        # Replace infinite values with NaN first
-        X = X.replace([np.inf, -np.inf], np.nan)
+        # Replace infinite values with NaN first (only numeric columns)
+        numeric_columns = X.select_dtypes(include=[np.number]).columns
+        X[numeric_columns] = X[numeric_columns].replace([np.inf, -np.inf], np.nan)
         
-        # Fill NaN values with 0
-        X = X.fillna(0)
+        # Fill NaN values with 0 (only numeric columns)
+        X[numeric_columns] = X[numeric_columns].fillna(0)
         
-        # Check for extremely large values and cap them
+        # Check for extremely large values and cap them (only numeric columns)
         max_abs_value = 1e10  # Cap at 10 billion
-        X = X.clip(-max_abs_value, max_abs_value)
+        X[numeric_columns] = X[numeric_columns].clip(-max_abs_value, max_abs_value)
         
-        # Convert to numpy array
-        X = X.values
+        # Convert to numpy array (only numeric columns)
+        X = X[numeric_columns].values
         
         # Final check for any remaining problematic values
         if np.any(np.isinf(X)) or np.any(np.isnan(X)):
@@ -521,7 +522,7 @@ def main():
         'scaler': classifier.scaler
     }
     
-    with open('sentiment_data/classification_results.pkl', 'wb') as f:
+    with open('../sentiment_data/classification_results.pkl', 'wb') as f:
         pickle.dump(results_data, f)
     
     print("\n✓ Classification complete! Results saved to sentiment_data/classification_results.pkl")

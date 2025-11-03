@@ -23,13 +23,13 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load API key from environment
-API_KEY = os.getenv('API_KEY')
+# Load Alpha Vantage API key from environment
+ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
 
-# Date range for data collection (30 days limit for free NewsAPI)
+# Date range for data collection (Alpha Vantage supports historical data)
 from datetime import datetime, timedelta
 end_date = datetime.now()
-start_date = end_date - timedelta(days=30)
+start_date = end_date - timedelta(days=365)  # Get 1 year of data
 START_DATE = start_date.strftime('%Y-%m-%d')
 END_DATE = end_date.strftime('%Y-%m-%d')
 
@@ -100,45 +100,46 @@ class SentimentDataCollector:
             logger.error(f"Error downloading stock data: {e}")
             raise
     
-    def collect_news_data(self, api_key: str, start_date: str, end_date: str,
-                          query: str = None) -> pd.DataFrame:
+
+    def collect_alpha_vantage_news(self, api_key: str, start_date: str, end_date: str) -> pd.DataFrame:
         """
-        Collect financial news using NewsAPI.
+        Collect financial news with sentiment using Alpha Vantage API.
         
         Parameters:
         -----------
         api_key : str
-            NewsAPI key from https://newsapi.org
+            Alpha Vantage API key
         start_date : str
             Start date in format 'YYYY-MM-DD'
         end_date : str
             End date in format 'YYYY-MM-DD'
-        query : str
-            Search query (e.g., company name or ticker). If None, uses company_symbol
             
         Returns:
         --------
         pd.DataFrame
-            News articles with dates and content
+            News articles with dates, content, and sentiment scores
         """
         if not api_key:
-            logger.error("API key is required for news collection")
+            logger.error("Alpha Vantage API key is required")
             return None
             
-        logger.info(f"Collecting news data from NewsAPI for {query or self.company_symbol}")
+        logger.info(f"Collecting news with sentiment from Alpha Vantage for {self.company_symbol}")
         
         try:
-            query = query or self.company_symbol
+            # Convert dates to Alpha Vantage format (YYYYMMDDTHHMM)
+            start_datetime = f"{start_date.replace('-', '')}T0000"
+            end_datetime = f"{end_date.replace('-', '')}T2359"
             
-            # Build API endpoint
-            endpoint = "https://newsapi.org/v2/everything"
+            # Build Alpha Vantage API endpoint
+            endpoint = "https://www.alphavantage.co/query"
             params = {
-                'q': query,
-                'language': 'en',
-                'sortBy': 'publishedAt',
-                'apiKey': api_key,
-                'from': start_date,
-                'to': end_date
+                'function': 'NEWS_SENTIMENT',
+                'tickers': self.company_symbol,
+                'time_from': start_datetime,
+                'time_to': end_datetime,
+                'sort': 'LATEST',
+                'limit': 1000,  # Maximum articles
+                'apikey': api_key
             }
             
             # Fetch news
@@ -147,35 +148,53 @@ class SentimentDataCollector:
             
             data = response.json()
             
-            if data['status'] != 'ok':
-                logger.error(f"NewsAPI error: {data.get('message', 'Unknown error')}")
+            # Check for API errors
+            if 'Error Message' in data:
+                logger.error(f"Alpha Vantage API error: {data['Error Message']}")
                 return None
             
-            articles = data.get('articles', [])
-            logger.info(f"Collected {len(articles)} news articles")
+            if 'Note' in data:
+                logger.warning(f"Alpha Vantage API note: {data['Note']}")
+                return None
+            
+            articles = data.get('feed', [])
+            
+            if not articles:
+                logger.warning("No news articles found from Alpha Vantage")
+                return pd.DataFrame()
+            
+            logger.info(f"Collected {len(articles)} news articles with sentiment")
             
             # Convert to DataFrame
             news_df = pd.DataFrame([{
-                'date': pd.to_datetime(article['publishedAt']).date(),
+                'date': pd.to_datetime(article['time_published']).date(),
                 'title': article['title'],
-                'description': article['description'],
-                'content': article['content'],
-                'source': article['source']['name'],
-                'url': article['url']
+                'description': article['summary'],
+                'content': article['summary'],
+                'source': 'Alpha Vantage',
+                'url': article.get('url', ''),
+                'sentiment_score': article.get('overall_sentiment_score', 0),
+                'sentiment_label': article.get('overall_sentiment_label', 'neutral'),
+                'ticker_sentiment': article.get('ticker_sentiment', [{}])[0] if article.get('ticker_sentiment') else {}
             } for article in articles])
+            
+            # Filter out articles without content
+            news_df = news_df[news_df['title'].notna() & (news_df['title'] != '')]
             
             if len(news_df) > 0:
                 self.news_data = news_df
                 logger.info(f"News date range: {news_df['date'].min()} to {news_df['date'].max()}")
+                logger.info(f"Sentiment range: {news_df['sentiment_score'].min():.3f} to {news_df['sentiment_score'].max():.3f}")
             
             return news_df
             
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error downloading news: {e}")
+            logger.error(f"Error downloading news from Alpha Vantage: {e}")
             return None
         except Exception as e:
-            logger.error(f"Error collecting news data: {e}")
+            logger.error(f"Error collecting Alpha Vantage news data: {e}")
             return None
+
     
     
     def align_data(self, stock_data: pd.DataFrame, news_data: pd.DataFrame) -> pd.DataFrame:
@@ -207,11 +226,19 @@ class SentimentDataCollector:
         logger.info(f"News dates available: {sorted(news_data['date'].unique().tolist())}")
         
         # Group news by date and aggregate
-        news_grouped = news_data.groupby('date').agg({
+        agg_dict = {
             'title': lambda x: ' | '.join(x),
             'description': lambda x: ' | '.join(x),
             'source': lambda x: ', '.join(x.unique())
-        }).reset_index()
+        }
+        
+        # Add sentiment columns if they exist (from Alpha Vantage)
+        if 'sentiment_score' in news_data.columns:
+            agg_dict['sentiment_score'] = 'mean'  # Average sentiment for the day
+        if 'sentiment_label' in news_data.columns:
+            agg_dict['sentiment_label'] = lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else 'neutral'
+        
+        news_grouped = news_data.groupby('date').agg(agg_dict).reset_index()
         
         news_grouped.rename(columns={'date': 'Date'}, inplace=True)
         
@@ -264,27 +291,31 @@ class SentimentDataCollector:
 
 # Example usage
 if __name__ == "__main__":
-    # Check if API key is available
-    if not API_KEY:
-        logger.error("API_KEY not found in environment variables")
-        print("Error: API_KEY not found in .env file")
-        print("Get your free API key from: https://newsapi.org/register")
+    # Check if Alpha Vantage API key is available
+    if not ALPHA_VANTAGE_API_KEY:
+        logger.error("ALPHA_VANTAGE_API_KEY not found in environment variables")
+        print("Error: ALPHA_VANTAGE_API_KEY not found in .env file")
+        print("Get your free API key from: https://www.alphavantage.co/support/#api-key")
         exit()
     
+    # Use BAC (Bank of America) - works well with Alpha Vantage
+    ticker_symbol = 'BAC'
+    
     # Initialize collector
-    collector = SentimentDataCollector('CBA.AX')
+    collector = SentimentDataCollector(ticker_symbol)
     
     # Collect stock data
     logger.info(f"Using date range: {START_DATE} to {END_DATE}")
-    print("Collecting stock data...")
+    print(f"Collecting stock data for {ticker_symbol}...")
     stock_data = collector.collect_stock_data(START_DATE, END_DATE)
     print(f"Stock data: {len(stock_data)} days\n")
     
-    # Collect news data
-    print("Collecting news data...")
-    news_data = collector.collect_news_data(API_KEY, START_DATE, END_DATE, 'Commbank')
+    # Collect news with sentiment from Alpha Vantage
+    print(f"Collecting news with sentiment from Alpha Vantage for {ticker_symbol}...")
+    news_data = collector.collect_alpha_vantage_news(ALPHA_VANTAGE_API_KEY, START_DATE, END_DATE)
     
     if news_data is not None and len(news_data) > 0:
+        print(f"✅ Alpha Vantage: {len(news_data)} articles with sentiment scores")
         print(f"News data: {len(news_data)} articles\n")
         
         # Align data
@@ -296,4 +327,5 @@ if __name__ == "__main__":
         collector.save_data(combined_data, 'combined_data.pkl')
         print("✓ Data collection and alignment complete!")
     else:
-        print("Failed to collect news data. Check API key and connection.")
+        print("❌ Failed to collect news data from Alpha Vantage.")
+        print("Check your API key and ticker symbol.")

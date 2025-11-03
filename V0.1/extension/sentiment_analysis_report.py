@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sentiment_classification import SentimentFeatureEngineer, TechnicalIndicators
 import os
+from datetime import datetime
+from io import StringIO
+import sys
 
 def analyze_sentiment_data():
     """Comprehensive analysis of sentiment data and its relationship with stock prices."""
@@ -136,7 +139,7 @@ def create_visualizations(data):
 def analyze_feature_importance():
     """Analyze feature importance from classification results."""
     
-    results_file = 'sentiment_data/classification_results.pkl'
+    results_file = '../sentiment_data/classification_results.pkl'
     if not os.path.exists(results_file):
         print("\n⚠️  No classification results found. Run sentiment_classification.py first.")
         return
@@ -163,8 +166,16 @@ def analyze_feature_importance():
             sentiment_features = [f for f in feature_names if 'sentiment' in f.lower()]
             technical_features = [f for f in feature_names if f not in sentiment_features]
             
-            sentiment_importance = sum(importances[i] for i, f in enumerate(feature_names) if 'sentiment' in f.lower())
-            technical_importance = sum(importances[i] for i, f in enumerate(feature_names) if 'sentiment' not in f.lower())
+            # Calculate importance safely
+            sentiment_importance = 0.0
+            technical_importance = 0.0
+            
+            for i, feature in enumerate(feature_names):
+                if i < len(importances):  # Safety check
+                    if 'sentiment' in feature.lower():
+                        sentiment_importance += importances[i]
+                    else:
+                        technical_importance += importances[i]
             
             print(f"\n   Feature Category Importance:")
             print(f"   • Sentiment features: {sentiment_importance:.3f} ({len(sentiment_features)} features)")
